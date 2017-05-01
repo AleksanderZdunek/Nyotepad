@@ -1,0 +1,8 @@
+
+4. Refactor to implement better scroll on char input.
+5. Font selection
+6. ctrl+z
+7. Disable cursor blink timer on inactive
+8. Select All Ctrl+A
+9. Capture mouse movement outside window, for text selection.
+10. Open file through command line argument.
