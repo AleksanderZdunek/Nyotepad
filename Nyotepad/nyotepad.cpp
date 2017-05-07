@@ -104,6 +104,7 @@ std::wstring activeFileName;
 
 	bool drawCaret(true);
 	float averageLineHeight;
+	DWRITE_TEXT_METRICS textLayoutMetrics;
 
 	//~~~~ Device Independent Resources ~~~~ ~~~~
 	IDWriteFactory* pDWriteFactory(nullptr);
@@ -111,12 +112,17 @@ std::wstring activeFileName;
 	IDWriteTextLayout* pTextLayout(nullptr);
 
 	//~~~~ Functions ~~~~
+	void UpdateTextMetricsStructure()
+	{
+		pTextLayout->GetMetrics(&textLayoutMetrics) >> OnError(__FILE__, __LINE__);
+	}
+
 	float GetAverageLineHight()
 	{
-		DWRITE_TEXT_METRICS m;
-		pTextLayout->GetMetrics(&m);
+		//DWRITE_TEXT_METRICS m;
+		//pTextLayout->GetMetrics(&m);
 
-		return m.height / m.lineCount;
+		return textLayoutMetrics.height / textLayoutMetrics.lineCount;
 	}
 
 	void CreateTextLayout(aizstring const &string)
@@ -126,6 +132,8 @@ std::wstring activeFileName;
 		GetClientRect(hWindow, &rect);
 		pDWriteFactory->CreateTextLayout(string.data(), string.length(), pTextFormat, dpi.PixelsToDipsX(rect.right), dpi.PixelsToDipsY(rect.bottom), &pTextLayout) >> OnError(__FILE__, __LINE__);
 
+		UpdateTextMetricsStructure();
+		Scrollbar::SetScrollbar(0.f, textLayoutMetrics.height, textLayoutMetrics.layoutHeight);
 		averageLineHeight = GetAverageLineHight();
 	}
 
@@ -199,11 +207,9 @@ std::wstring activeFileName;
 		RECT rc;
 		GetClientRect(hWindow, &rc);
 
-		DWRITE_TEXT_METRICS tm;
-		pTextLayout->GetMetrics(&tm) >> OnError(__FILE__, __LINE__);
+		//DWRITE_TEXT_METRICS tm;
+		//pTextLayout->GetMetrics(&tm) >> OnError(__FILE__, __LINE__);
 		float yOffset{-static_cast<float>(Scrollbar::GetScrollOffset())};
-
-		Scrollbar::SetScrollbar(0.f, tm.height, tm.layoutHeight);
 
 		D2D1_POINT_2F origin = D2D1::Point2F(dpi.PixelsToDipsX(rc.left), dpi.PixelsToDipsY(rc.top)+yOffset);
 
@@ -312,7 +318,11 @@ void ScrollToCursor()
 
 	if( pointY+m.height+yOffset > dpi.PixelsToDipsY(rc.bottom) )
 	{
-		Scrollbar::SetScrollbarPos(static_cast<int>(pointY+m.height));
+		Scrollbar::SetScrollbarPos(static_cast<int>(pointY+m.height - DWrite::textLayoutMetrics.layoutHeight));
+	}
+	else if( pointY + yOffset < dpi.PixelsToDipsY(rc.top) )
+	{
+		Scrollbar::SetScrollbarPos(static_cast<int>(pointY));
 	}
 }
 
@@ -541,11 +551,11 @@ void CursorLineChange(int dir)
 	float pointX, pointY;
 	DWrite::pTextLayout->HitTestTextPosition(theString.GetCursorPos(), false, &pointX, &pointY, &m) >> OnError(__FILE__, __LINE__);
 
-	ScrollToCursor();
-
 	theString.SetCursorPos(DWrite::CursorPosAtPoint(pointX, pointY+m.height*dir));
 	DWrite::drawCaret = true;
 	InvalidateRect(hWindow, nullptr, false);
+
+	ScrollToCursor();
 }
 
 void CursorLineUp()
@@ -622,7 +632,7 @@ void OnCopy()
 	if( NULL == hClipboardData ) { MessageBox(hWindow, L"Error Set Clipboard Data", L"Edit Copy Error", MB_ICONWARNING); CloseClipboard(); return; }
 
 	CloseClipboard();
-	ScrollToCursor();
+	//ScrollToCursor();
 }
 
 bool OnPaste()
@@ -652,7 +662,7 @@ bool OnPaste()
 
 	GlobalUnlock(hClipboardData);
 	CloseClipboard();
-	ScrollToCursor();
+	//ScrollToCursor();
 	return retval;
 }
 
@@ -741,6 +751,7 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 			if( OnPaste() )
 			{
 				DWrite::CreateTextLayout(theString);
+				ScrollToCursor();
 				InvalidateRect(hWnd, nullptr, false);
 			}
 			break;

@@ -1,5 +1,4 @@
 
-4. Refactor to implement better scroll on char input.
 5. Font selection
 6. ctrl+z
 7. Disable cursor blink timer on inactive
