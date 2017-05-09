@@ -125,6 +125,12 @@ std::wstring activeFileName;
 		return textLayoutMetrics.height / textLayoutMetrics.lineCount;
 	}
 
+	void CreateTextFormat(const wchar_t* fontFamilyName, DWRITE_FONT_WEIGHT fontWeight = DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STYLE fontStyle = DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH fontStretch = DWRITE_FONT_STRETCH_NORMAL, float size = default_font_size)
+	{
+		SafeRelease(&pTextFormat);
+		pDWriteFactory->CreateTextFormat(fontFamilyName, nullptr, DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, size, L"en-us", &pTextFormat) >> OnError(__FILE__, __LINE__);
+	}
+
 	void CreateTextLayout(aizstring const &string)
 	{
 		SafeRelease(&pTextLayout);
@@ -141,8 +147,7 @@ std::wstring activeFileName;
 	{
 		DWriteCreateFactory(DWRITE_FACTORY_TYPE_SHARED, __uuidof(IDWriteFactory), reinterpret_cast<IUnknown**>(&pDWriteFactory)) >> OnError(__FILE__, __LINE__);
 
-		pDWriteFactory->CreateTextFormat(L"Segoe Script", nullptr, DWRITE_FONT_WEIGHT_REGULAR, DWRITE_FONT_STYLE_NORMAL, DWRITE_FONT_STRETCH_NORMAL, 16.0f, L"en-us", &pTextFormat) >> OnError(__FILE__, __LINE__);
-		//L"Segoe Script"
+		CreateTextFormat(default_font);
 
 		CreateTextLayout(theString);
 	}
@@ -351,7 +356,6 @@ void OnFileNew()
 	ResetActiveFilepath();
 	theString.clear();
 	DWrite::CreateTextLayout(theString);
-
 }
 
 void OpenFile(wchar_t* path)
@@ -666,6 +670,41 @@ bool OnPaste()
 	return retval;
 }
 
+void Repaint()
+{
+	InvalidateRect(hWindow, nullptr, false);
+}
+
+void OnFont()
+{
+	LOGFONT logfont;
+
+	CHOOSEFONT s{ sizeof(CHOOSEFONT) };
+	s.hwndOwner = hWindow;
+	//s.hDC; //ignored if Flags isn't CF_PRINTERFONTS or CF_BOTH
+	s.lpLogFont = &logfont;
+	//s.iPointSize; //Set after user closes dialog
+	s.Flags = CF_FORCEFONTEXIST | CF_NOSIMULATIONS;//CF_INACTIVEFONTS 
+	//s.rgbColors;
+	//s.lCustData;
+	//s.lpfnHook;
+	//s.lpTemplateName;
+	//s.hInstance; Ignored if neither CF_ENABLETEMPLATEHANDLE nor CF_ENABLETEMPLATE flag is set.
+	//s.lpszStyle; //Use with CF_USESTYLE flag
+	//s.nFontType; //The type of the selected font when ChooseFont returns.
+	//s.nSizeMin; Only with CF_LIMITSIZE flag
+	//s.nSizeMax; Only with CF_LIMITSIZE flag
+
+	if( ChooseFont(&s) )
+	{
+		DWrite::CreateTextFormat(logfont.lfFaceName, static_cast<DWRITE_FONT_WEIGHT>(logfont.lfWeight), (logfont.lfItalic ? DWRITE_FONT_STYLE_ITALIC : DWRITE_FONT_STYLE_NORMAL), DWRITE_FONT_STRETCH_NORMAL, s.iPointSize/7.2f);
+		DWrite::CreateTextLayout(theString);
+		Repaint();
+	}
+	else if( 0 == CommDlgExtendedError() ) /*cancel*/;
+	else MessageBox(hWindow,L"Font dialog error", L"Font dialog error", MB_ICONWARNING);
+}
+
 LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
 	LRESULT result(0);
@@ -754,6 +793,9 @@ LRESULT CALLBACK WindowProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPara
 				ScrollToCursor();
 				InvalidateRect(hWnd, nullptr, false);
 			}
+			break;
+		case Menu::OPTION_FONT:
+			OnFont();
 			break;
 		}
 	} break;

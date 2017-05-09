@@ -3,7 +3,8 @@
 namespace ver
 {
 
-wchar_t* const title = L"Nyotepad " "0.0.1x";
+wchar_t* const title = L"Nyotepad " "0.0.2x";
+wchar_t* const author = L"Aleksander Zdunek";
 wchar_t* const build = L"Build " __DATE__ " @ " __TIME__;
 wchar_t* const compile = L"" 
 #ifdef _MSC_VER

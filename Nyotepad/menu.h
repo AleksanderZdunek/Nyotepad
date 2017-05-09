@@ -12,7 +12,8 @@ enum
 	FILE_SAVEAS,
 	FILE_QUIT,
 	EDIT_COPY,
-	EDIT_PASTE
+	EDIT_PASTE,
+	OPTION_FONT
 };
 
 void CreateMenu(HWND hWindow);

@@ -1,3 +1,4 @@
 #pragma once
 
-//const int scrollspeed(64); //https://msdn.microsoft.com/en-us/library/windows/desktop/ms645601(v=vs.85).aspx#_win32_The_Mouse_Wheel
+wchar_t* const default_font = L"Segoe Print";
+const float default_font_size = 16.0f; //Device Independent Pixels

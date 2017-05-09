@@ -58,6 +58,15 @@ void Nyotepad::Menu::CreateMenu(HWND hWindow)
 		m.dwTypeData = L"Paste\tCtrl+V";
 		InsertMenuItem(hEditMenu, 1, MF_BYPOSITION, &m);
 	}
+	
+	//~~~ Font ~~~
+	{
+		MENUITEMINFO m{ sizeof(MENUITEMINFO) };
+		m.fMask = MIIM_ID | MIIM_STRING;
+		m.wID = OPTION_FONT;
+		m.dwTypeData = L"Font";
+		InsertMenuItem(hMenu, 2, MF_BYPOSITION, &m);
+	}
 
 	//~~~ ver menu ~~~
 	{
@@ -69,18 +78,21 @@ void Nyotepad::Menu::CreateMenu(HWND hWindow)
 		m.fType = MFT_RIGHTJUSTIFY;
 		m.hSubMenu = hVerMenu;
 		m.dwTypeData = L"ver";
-		InsertMenuItem(hMenu, 2, MF_BYPOSITION, &m);
+		InsertMenuItem(hMenu, 3, MF_BYPOSITION, &m);
 
 		m.fMask = MIIM_STRING | MIIM_STATE;
 		m.fState = MFS_DISABLED;
 		m.dwTypeData = ver::title;
 		InsertMenuItem(hVerMenu, 0, MF_BYPOSITION, &m);
 
-		m.dwTypeData = ver::build;
+		m.dwTypeData = ver::author;
 		InsertMenuItem(hVerMenu, 1, MF_BYPOSITION, &m);
 
-		m.dwTypeData = ver::compile;
+		m.dwTypeData = ver::build;
 		InsertMenuItem(hVerMenu, 2, MF_BYPOSITION, &m);
+
+		m.dwTypeData = ver::compile;
+		InsertMenuItem(hVerMenu, 3, MF_BYPOSITION, &m);
 	}
 
 	//~~~
